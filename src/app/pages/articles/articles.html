@@ -1,0 +1,47 @@
+<div class="container" (scroll)="onScroll($event)">
+  <h5 class="container__h5">Filter by keywords</h5>
+  <input
+    class="container__input"
+    type="text"
+    placeholder="search"
+    (input)="onSearch($event)"
+  />
+  <img class="container__img" src="search.svg" alt="🔍" />
+  <h5 class="container__h5 container__h5_results">
+    @if (currentSearch.length) { Results: {{ filteredArticlesCount }} } @else {
+    Results: {{ articlesCount }}
+    }
+  </h5>
+
+  @if (currentSearch.length) {
+  <div class="container__articles" (scroll)="onScrollFiltered($event)">
+    @for (article of filteredArticles; track $index) {
+    <app-article-card
+      (click)="openExternal(article.url)"
+      [article]="article"
+    ></app-article-card>
+    }
+  </div>
+  @if (loading) {
+  <p class="container__spinner">
+    <mat-spinner [diameter]="30"></mat-spinner>
+  </p>
+  } } @else if (articles.length){
+  <div class="container__articles" (scroll)="onScroll($event)">
+    @for (article of articles; track $index) {
+    <app-article-card
+      (click)="openExternal(article.url)"
+      [article]="article"
+    ></app-article-card>
+    }
+  </div>
+  @if (loading) {
+  <p class="container__spinner">
+    <mat-spinner [diameter]="30"></mat-spinner>
+  </p>
+  } } @else if (loading){
+  <div class="container__spinner">
+    <mat-spinner [diameter]="80"></mat-spinner>
+  </div>
+  }
+</div>
