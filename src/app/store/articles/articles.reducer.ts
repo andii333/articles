@@ -7,10 +7,15 @@ import {
   loadOneArticle,
   loadOneArticleFailure,
   loadOneArticleSuccess,
-  filterArticlesSuccess,
-  filterArticlesFailure,
-  filterArticles,
+  clearFilterArticles,
+  filterArticlesForTitleSuccess,
+  filterArticlesForTitle,
+  filterArticlesForTitleFailure,
+  filterArticlesForSummarySuccess,
+  filterArticlesForSummary,
+  filterArticlesForSummaryFailure,
 } from './articles.actions';
+import { ArticleFilterTypeEnum } from '../../models/enums/article-filter-type.enum';
 
 export interface ArticlesState {
   articles: IArticle[];
@@ -19,8 +24,10 @@ export interface ArticlesState {
   activeArticle: IArticle | null;
   articlesCount: number;
   filteredArticles: IArticle[];
-  filteredArticlesCount: number;
-  filteredOffset: number;
+  filteredArticlesForTitleCount: number;
+  filteredArticlesForSummaryCount: number;
+  filteredTitleOffset: number;
+  filteredSummaryOffset: number;
 }
 
 export const initialState: ArticlesState = {
@@ -30,8 +37,10 @@ export const initialState: ArticlesState = {
   activeArticle: null,
   articlesCount: 0,
   filteredArticles: [],
-  filteredArticlesCount: 0,
-  filteredOffset: 0,
+  filteredArticlesForTitleCount: 0,
+  filteredArticlesForSummaryCount: 0,
+  filteredTitleOffset: 0,
+  filteredSummaryOffset: 0,
 };
 
 export const articlesReducer = createReducer(
@@ -66,22 +75,48 @@ export const articlesReducer = createReducer(
     loading: false,
   })),
 
-  on(filterArticles, (state, { filteredOffset }) => ({
+  on(filterArticlesForTitle, (state, { filteredOffset }) => ({
     ...state,
     loading: true,
-    filteredOffset,
+    filteredTitleOffset: filteredOffset,
   })),
   on(
-    filterArticlesSuccess,
-    (state, { filteredArticles, filteredArticlesCount }) => ({
+    filterArticlesForTitleSuccess,
+    (state, { filteredArticles, titleCount }) => ({
       ...state,
       loading: false,
       filteredArticles: [...state.filteredArticles, ...filteredArticles],
-      filteredArticlesCount: filteredArticlesCount,
+      filteredArticlesForTitleCount: titleCount,
     })
   ),
-  on(filterArticlesFailure, (state) => ({
+  on(filterArticlesForTitleFailure, (state) => ({
     ...state,
     loading: false,
+  })),
+
+  on(filterArticlesForSummary, (state, { filteredOffset }) => ({
+    ...state,
+    loading: true,
+    filteredSummaryOffset: filteredOffset,
+  })),
+  on(
+    filterArticlesForSummarySuccess,
+    (state, { filteredArticles, summaryCount }) => ({
+      ...state,
+      loading: false,
+      filteredArticles: [...state.filteredArticles, ...filteredArticles],
+      filteredArticlesForSummaryCount: summaryCount,
+    })
+  ),
+  on(filterArticlesForSummaryFailure, (state) => ({
+    ...state,
+    loading: false,
+  })),
+
+  on(clearFilterArticles, (state) => ({
+    ...state,
+    filteredArticles: [],
+    filteredTitleOffset: 0,
+    filteredSummaryOffset: 0,
   }))
 );

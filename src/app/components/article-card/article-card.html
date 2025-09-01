@@ -1,8 +1,8 @@
 @if (article){
 <div class="card">
   <div>
-    <h3>{{ article.title }}</h3>
-    <p>{{ article.summary }}</p>
+    <h3 [innerHTML]="article.title | highlight : currentSearch"></h3>
+    <p [innerHTML]="article.summary | highlight : currentSearch"></p>
   </div>
 </div>
 }

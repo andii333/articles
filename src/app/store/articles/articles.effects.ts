@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, delay, map, mergeMap, of } from 'rxjs';
+import { catchError, map, mergeMap, of } from 'rxjs';
 import { ApiService } from '../../services/api-service';
 import {
   loadArticles,
@@ -9,10 +9,14 @@ import {
   loadOneArticle,
   loadOneArticleFailure,
   loadOneArticleSuccess,
-  filterArticles,
-  filterArticlesSuccess,
-  filterArticlesFailure,
+  filterArticlesForTitle,
+  filterArticlesForSummary,
+  filterArticlesForTitleFailure,
+  filterArticlesForTitleSuccess,
+  filterArticlesForSummarySuccess,
+  filterArticlesForSummaryFailure,
 } from './articles.actions';
+import { ArticleFilterTypeEnum } from '../../models/enums/article-filter-type.enum';
 
 @Injectable()
 export class ArticlesEffects {
@@ -36,19 +40,52 @@ export class ArticlesEffects {
     )
   );
 
-  filterArticles$ = createEffect(() =>
+  filterArticlesForTitle$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(filterArticles),
+      ofType(filterArticlesForTitle),
       mergeMap(({ limit, filteredOffset, searchArray }) =>
-        this.apiService.searchArticle(searchArray, limit, filteredOffset).pipe(
-          map((response) =>
-            filterArticlesSuccess({
-              filteredArticles: response.results,
-              filteredArticlesCount: response.count,
-            })
-          ),
-          catchError((error) => of(filterArticlesFailure({ error })))
-        )
+        this.apiService
+          .searchArticle(
+            searchArray,
+            limit,
+            filteredOffset,
+            ArticleFilterTypeEnum.Title
+          )
+          .pipe(
+            map((response) =>
+              filterArticlesForTitleSuccess({
+                filteredArticles: response.results,
+                titleCount: response.count,
+              })
+            ),
+            catchError((error) => of(filterArticlesForTitleFailure({ error })))
+          )
+      )
+    )
+  );
+
+  filterArticlesForSummary$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(filterArticlesForSummary),
+      mergeMap(({ limit, filteredOffset, searchArray }) =>
+        this.apiService
+          .searchArticle(
+            searchArray,
+            limit,
+            filteredOffset,
+            ArticleFilterTypeEnum.Summary
+          )
+          .pipe(
+            map((response) =>
+              filterArticlesForSummarySuccess({
+                filteredArticles: response.results,
+                summaryCount: response.count,
+              })
+            ),
+            catchError((error) =>
+              of(filterArticlesForSummaryFailure({ error }))
+            )
+          )
       )
     )
   );

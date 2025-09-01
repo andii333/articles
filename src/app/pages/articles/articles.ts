@@ -1,7 +1,9 @@
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { Store } from '@ngrx/store';
 import {
-  filterArticles,
+  clearFilterArticles,
+  filterArticlesForSummary,
+  filterArticlesForTitle,
   loadArticles,
 } from '../../store/articles/articles.actions';
 import { IArticle } from '../../models/interfaces/article.interface';
@@ -17,50 +19,78 @@ import {
   selectArticlesCount,
   selectArticlesLoading,
   selectFilteredArticles,
-  selectFilteredArticlesCount,
-  selectFilteredOffset,
+  selectFilteredArticlesForSummaryCount,
+  selectFilteredArticlesForTitleCount,
+  selectFilteredSummaryOffset,
+  selectFilteredTitleOffset,
   selectOffset,
 } from '../../store/articles/articles.selectors';
-import { NgClass } from '@angular/common';
 import { ArticleCard } from '../../components/article-card/article-card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ArticleFilterTypeEnum } from '../../models/enums/article-filter-type.enum';
+import { ApiService } from '../../services/api-service';
 
 @Component({
   selector: 'app-articles',
-  imports: [ArticleCard, MatProgressSpinnerModule, NgClass],
+  imports: [ArticleCard, MatProgressSpinnerModule],
   templateUrl: './articles.html',
   styleUrl: './articles.scss',
 })
 export class Articles implements OnInit {
   private store = inject(Store);
+  private apiService = inject(ApiService);
   articles$: Observable<IArticle[]> = this.store.select(selectAllArticles);
+  articlesCount$: Observable<number> = this.store.select(selectArticlesCount);
+  offset$: Observable<number> = this.store.select(selectOffset);
+
   filteredArticles$: Observable<IArticle[]> = this.store.select(
     selectFilteredArticles
   );
-  offset$: Observable<number> = this.store.select(selectOffset);
-  filteredOffset$: Observable<number> = this.store.select(selectFilteredOffset);
-  articlesCount$: Observable<number> = this.store.select(selectArticlesCount);
-  filteredArticlesCount$: Observable<number> = this.store.select(
-    selectFilteredArticlesCount
+  filteredTitleOffset$: Observable<number> = this.store.select(
+    selectFilteredTitleOffset
   );
+  filteredSummaryOffset$: Observable<number> = this.store.select(
+    selectFilteredSummaryOffset
+  );
+  filteredArticlesForTitleCount$: Observable<number> = this.store.select(
+    selectFilteredArticlesForTitleCount
+  );
+  filteredArticlesForSummaryCount$: Observable<number> = this.store.select(
+    selectFilteredArticlesForSummaryCount
+  );
+  resultsForTitleAmountSignal = this.apiService.resultsForTitleAmountSignal;
+  resultsForSummaryAmountSignal = this.apiService.resultsForSummaryAmountSignal;
+
   articles: IArticle[] = [];
   filteredArticles: IArticle[] = [];
   offset = 0;
-  filteredOffset = 0;
-  limit = 20;
+  filteredSummaryOffset = 0;
+  filteredTitleOffset = 0;
+  limit = 50;
   articlesCount = 0;
-  filteredArticlesCount = 0;
+  filteredArticlesForTitleCount = 0;
+  filteredArticlesForSummaryCount = 0;
   loading = false;
+  threshold = 600;
   private searchSubject = new Subject<string>();
   private destroyRef = inject(DestroyRef);
   currentSearch: string[] = [];
 
   ngOnInit(): void {
+    this.initArticlesLoad();
+    this.initArticlesSubscription();
+    this.initFilteredArticlesSubscription();
+    this.initSearchSubscription();
+  }
+
+  private initArticlesLoad(): void {
     this.store.dispatch(
       loadArticles({ limit: this.limit, offset: this.offset })
     );
+  }
 
+  private initArticlesSubscription(): void {
     combineLatest([
       this.store.select(selectAllArticles),
       this.store.select(selectOffset),
@@ -74,19 +104,36 @@ export class Articles implements OnInit {
         this.articlesCount = count;
         this.loading = loading;
       });
+  }
 
+  private initFilteredArticlesSubscription(): void {
     combineLatest([
       this.filteredArticles$,
-      this.filteredOffset$,
-      this.filteredArticlesCount$,
+      this.filteredSummaryOffset$,
+      this.filteredTitleOffset$,
+      this.filteredArticlesForTitleCount$,
+      this.filteredArticlesForSummaryCount$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([filteredArticles, filteredOffset, filteredCount]) => {
-        this.filteredArticles = filteredArticles;
-        this.filteredOffset = filteredOffset;
-        this.filteredArticlesCount = filteredCount;
-      });
+      .subscribe(
+        ([
+          filteredArticles,
+          filteredSummaryOffset,
+          filteredTitleOffset,
+          filteredArticlesForTitleCount,
+          filteredArticlesForSummaryCount,
+        ]) => {
+          this.filteredArticles = filteredArticles;
+          this.filteredSummaryOffset = filteredSummaryOffset;
+          this.filteredTitleOffset = filteredTitleOffset;
+          this.filteredArticlesForTitleCount = filteredArticlesForTitleCount;
+          this.filteredArticlesForSummaryCount =
+            filteredArticlesForSummaryCount;
+        }
+      );
+  }
 
+  private initSearchSubscription(): void {
     this.searchSubject
       .pipe(
         debounceTime(800),
@@ -94,14 +141,18 @@ export class Articles implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((searchText) => {
-        this.currentSearch = searchText.trim().split(/\s+/);
-        this.store.dispatch(
-          filterArticles({
-            limit: this.limit,
-            filteredOffset: this.filteredOffset,
-            searchArray: this.currentSearch,
-          })
-        );
+        this.currentSearch = searchText.trim().split(/\s+/).filter(Boolean);
+        if (this.currentSearch.length) {
+          this.store.dispatch(clearFilterArticles());
+          this.apiService.gerResultsAmount(this.currentSearch);
+          this.store.dispatch(
+            filterArticlesForTitle({
+              limit: this.limit,
+              filteredOffset: 0,
+              searchArray: this.currentSearch,
+            })
+          );
+        }
       });
   }
 
@@ -110,42 +161,60 @@ export class Articles implements OnInit {
     this.searchSubject.next(value);
   }
 
-  onScroll(event: Event) {
+  scroll($event: Event): void {
+    this.currentSearch.length
+      ? this.onScrollFiltered($event)
+      : this.onScroll($event);
+  }
+
+  private onScroll(event: Event) {
     const target = event.target as HTMLElement;
-    const threshold = 600;
-    console.log('this.articles.length', this.articles.length);
-    console.log('this.articlesCount', this.articlesCount);
 
     if (
       target.scrollTop + target.clientHeight >=
-        target.scrollHeight - threshold &&
+        target.scrollHeight - this.threshold &&
       this.articles.length < this.articlesCount &&
       !this.loading
     ) {
-      this.loadMore();
+      this.store.dispatch(
+        loadArticles({ limit: this.limit, offset: this.offset + this.limit })
+      );
     }
   }
-
-  loadMore() {
-    this.store.dispatch(
-      loadArticles({ limit: this.limit, offset: this.offset + this.limit })
-    );
-  }
-
-  onScrollFiltered(event: Event) {
+  private onScrollFiltered(event: Event) {
     const target = event.target as HTMLElement;
-    const threshold = 600;
-
     if (
       target.scrollTop + target.clientHeight >=
-        target.scrollHeight - threshold &&
-      this.filteredArticles.length < this.filteredArticlesCount &&
+        target.scrollHeight - this.threshold &&
+      this.filteredArticles.length < this.filteredArticlesForTitleCount &&
       !this.loading
     ) {
       this.store.dispatch(
-        filterArticles({
+        filterArticlesForTitle({
           limit: this.limit,
-          filteredOffset: this.filteredOffset + this.limit,
+          filteredOffset: this.filteredTitleOffset + this.limit,
+          searchArray: this.currentSearch,
+        })
+      );
+    }
+
+    if (
+      this.resultsForSummaryAmountSignal() &&
+      target.scrollTop + target.clientHeight >=
+        target.scrollHeight - this.threshold &&
+      this.filteredArticles.length !==
+        this.resultsForSummaryAmountSignal()! +
+          this.filteredArticlesForTitleCount &&
+      !this.loading &&
+      this.filteredArticles.length >= this.filteredArticlesForTitleCount
+    ) {
+      this.store.dispatch(
+        filterArticlesForSummary({
+          limit: this.limit,
+          filteredOffset:
+            this.filteredArticles.length !== this.filteredArticlesForTitleCount
+              ? this.filteredSummaryOffset + this.limit
+              : 0,
           searchArray: this.currentSearch,
         })
       );

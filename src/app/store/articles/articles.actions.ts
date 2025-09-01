@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import { IArticle } from '../../models/interfaces/article.interface';
+import { ArticleFilterTypeEnum } from '../../models/enums/article-filter-type.enum';
 
 export const loadArticles = createAction(
   '[Articles] Load Articles',
@@ -27,15 +28,46 @@ export const loadOneArticleFailure = createAction(
   props<{ error: any }>()
 );
 
-export const filterArticles = createAction(
-  '[Articles] Filter Articles',
-  props<{ limit: number; filteredOffset: number; searchArray: string[] }>()
+export const filterArticlesForTitle = createAction(
+  '[Articles] Filter Articles For Title',
+  props<{
+    limit: number;
+    filteredOffset: number;
+    searchArray: string[];
+  }>()
 );
-export const filterArticlesSuccess = createAction(
-  '[Articles] Filter Articles Success',
-  props<{ filteredArticles: IArticle[]; filteredArticlesCount: number }>()
+export const filterArticlesForTitleSuccess = createAction(
+  '[Articles] Filter Articles For Title Success',
+  props<{
+    filteredArticles: IArticle[];
+    titleCount: number;
+  }>()
 );
-export const filterArticlesFailure = createAction(
-  '[Articles] Filter Articles Failure',
+export const filterArticlesForTitleFailure = createAction(
+  '[Articles] Filter Articles For Title Failure',
   props<{ error: any }>()
+);
+
+export const filterArticlesForSummary = createAction(
+  '[Articles] Filter Articles For Summary',
+  props<{
+    limit: number;
+    filteredOffset: number;
+    searchArray: string[];
+  }>()
+);
+export const filterArticlesForSummarySuccess = createAction(
+  '[Articles] Filter Articles For Summary Success',
+  props<{
+    filteredArticles: IArticle[];
+    summaryCount: number;
+  }>()
+);
+export const filterArticlesForSummaryFailure = createAction(
+  '[Articles] Filter Articles For Summary Failure',
+  props<{ error: any }>()
+);
+
+export const clearFilterArticles = createAction(
+  '[Articles] Clear Filter Articles'
 );

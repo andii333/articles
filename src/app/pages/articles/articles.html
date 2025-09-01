@@ -1,4 +1,4 @@
-<div class="container" (scroll)="onScroll($event)">
+<div class="container" (scroll)="scroll($event)">
   <h5 class="container__h5">Filter by keywords</h5>
   <input
     class="container__input"
@@ -8,40 +8,27 @@
   />
   <img class="container__img" src="search.svg" alt="🔍" />
   <h5 class="container__h5 container__h5_results">
-    @if (currentSearch.length) { Results: {{ filteredArticlesCount }} } @else {
-    Results: {{ articlesCount }}
+    @if (currentSearch.length && resultsForTitleAmountSignal() !== null &&
+    resultsForSummaryAmountSignal() !== null) { Results:
+    {{ resultsForTitleAmountSignal()! + resultsForSummaryAmountSignal()! }} }
+    @else { Results: {{ articlesCount }}
     }
   </h5>
 
-  @if (currentSearch.length) {
-  <div class="container__articles" (scroll)="onScrollFiltered($event)">
-    @for (article of filteredArticles; track $index) {
+  @if (filteredArticles.length || articles.length) {
+  <div class="container__articles">
+    @for (article of currentSearch.length ? filteredArticles : articles; track
+    $index) {
     <app-article-card
       (click)="openExternal(article.url)"
       [article]="article"
+      [currentSearch]="currentSearch"
     ></app-article-card>
     }
   </div>
-  @if (loading) {
+  } @if (loading) {
   <p class="container__spinner">
     <mat-spinner [diameter]="30"></mat-spinner>
   </p>
-  } } @else if (articles.length){
-  <div class="container__articles" (scroll)="onScroll($event)">
-    @for (article of articles; track $index) {
-    <app-article-card
-      (click)="openExternal(article.url)"
-      [article]="article"
-    ></app-article-card>
-    }
-  </div>
-  @if (loading) {
-  <p class="container__spinner">
-    <mat-spinner [diameter]="30"></mat-spinner>
-  </p>
-  } } @else if (loading){
-  <div class="container__spinner">
-    <mat-spinner [diameter]="80"></mat-spinner>
-  </div>
   }
 </div>

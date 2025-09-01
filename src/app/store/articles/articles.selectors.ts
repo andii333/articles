@@ -34,12 +34,21 @@ export const selectFilteredArticles = createSelector(
   (state: ArticlesState) => state.filteredArticles
 );
 
-export const selectFilteredArticlesCount = createSelector(
+export const selectFilteredArticlesForTitleCount = createSelector(
   selectArticlesState,
-  (state: ArticlesState) => state.filteredArticlesCount
+  (state: ArticlesState) => state.filteredArticlesForTitleCount
 );
 
-export const selectFilteredOffset = createSelector(
+export const selectFilteredArticlesForSummaryCount = createSelector(
   selectArticlesState,
-  (state: ArticlesState) => state.filteredOffset
+  (state: ArticlesState) => state.filteredArticlesForSummaryCount
+);
+
+export const selectFilteredTitleOffset = createSelector(
+  selectArticlesState,
+  (state: ArticlesState) => state.filteredTitleOffset
+);
+export const selectFilteredSummaryOffset = createSelector(
+  selectArticlesState,
+  (state: ArticlesState) => state.filteredSummaryOffset
 );
