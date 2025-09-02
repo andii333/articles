@@ -1,12 +1,14 @@
 <div class="container" (scroll)="scroll($event)">
   <h5 class="container__h5">Filter by keywords</h5>
-  <input
-    class="container__input"
-    type="text"
-    placeholder="search"
-    (input)="onSearch($event)"
-  />
-  <img class="container__img" src="search.svg" alt="🔍" />
+  <div class="container__input-box">
+    <input
+      class="container__input"
+      type="text"
+      placeholder="search"
+      (input)="onSearch($event)"
+    />
+    <img class="container__img" src="search.svg" alt="🔍" />
+  </div>
   <h5 class="container__h5 container__h5_results">
     @if (currentSearch.length && resultsForTitleAmountSignal() !== null &&
     resultsForSummaryAmountSignal() !== null) { Results:

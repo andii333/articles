@@ -1,5 +1,69 @@
+@use "var" as *;
+@use "mixins" as *;
+
 .card {
+  @include border();
+  @include shadow();
   height: 530px;
   width: 400px;
-  border: 1px solid black;
+  cursor: pointer;
+
+  &__img,
+  &__spinner {
+    width: 400px;
+    height: 217px;
+    object-fit: cover;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
+  &__spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  &__body {
+    padding: 25px;
+  }
+
+  &__date {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 25px;
+  }
+
+  &__date-text {
+    @include date-text();
+  }
+
+  &__title {
+    @include title-text();
+    font-family: "Montserrat", sans-serif;
+    height: 58px;
+    overflow: hidden;
+  }
+
+  &__summary {
+    @include summary-text();
+    height: 96px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 20px 0;
+  }
+
+  &:hover &__link {
+    text-decoration: underline;
+  }
+  &__link {
+    @include link-text();
+  }
+
+  &__arrow {
+    margin-left: 6px;
+  }
 }

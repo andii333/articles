@@ -28,7 +28,6 @@ import {
 import { ArticleCard } from '../../components/article-card/article-card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ArticleFilterTypeEnum } from '../../models/enums/article-filter-type.enum';
 import { ApiService } from '../../services/api-service';
 
 @Component({
@@ -67,12 +66,12 @@ export class Articles implements OnInit {
   offset = 0;
   filteredSummaryOffset = 0;
   filteredTitleOffset = 0;
-  limit = 50;
+  limit = 10;
   articlesCount = 0;
   filteredArticlesForTitleCount = 0;
   filteredArticlesForSummaryCount = 0;
   loading = false;
-  threshold = 600;
+  threshold = 1100;
   private searchSubject = new Subject<string>();
   private destroyRef = inject(DestroyRef);
   currentSearch: string[] = [];

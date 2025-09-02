@@ -1,8 +1,35 @@
-@if (article){
 <div class="card">
-  <div>
-    <h3 [innerHTML]="article.title | highlight : currentSearch"></h3>
-    <p [innerHTML]="article.summary | highlight : currentSearch"></p>
+  @if (!imageLoaded()){
+  <div class="card__spinner">
+    <mat-spinner [diameter]="30"></mat-spinner>
+  </div>
+  }@else{
+  <img
+    class="card__img"
+    mat-card-image
+    [src]="imageSrc()"
+    alt="Photo"
+    loading="lazy"
+  />
+  }
+  <div class="card__body">
+    <p class="card__date">
+      <img src="calendar.svg" alt="📆" /><span class="card__date-text">{{
+        article.updated_at | date : "MMMM d'th', y"
+      }}</span>
+    </p>
+    <h3
+      class="card__title"
+      [innerHTML]="article.title | highlight : currentSearch"
+    ></h3>
+    <p class="card__summary">
+      <span
+        [innerHTML]="
+          getShortText(article.summary, 100) | highlight : currentSearch
+        "
+      ></span>
+    </p>
+    <a class="card__link">Read more</a
+    ><img class="card__arrow" src="arrow-right.svg" alt="→" />
   </div>
 </div>
-}
